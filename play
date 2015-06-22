@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright (c) 2015 龔士捷 <ksc91u@gmail.com>
+# Copyright (c) 2007 洪任諭 (PCMan) <pcman.tw@gmail.com>
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+import os, os.path, re, sys, datetime
+IS_PYTHON_2=False
+try:
+    import urllib.request as urllib2
+    IS_PYTHON_2=True
+except ImportError:
+    IS_PYTHON_2=False
+    import urllib2
+
+base = 'http://hichannel.hinet.net/radio/play.do?id='
+url = base + sys.argv[1]
+
+dir_path = os.path.expanduser('~/.config/hinedo/' )
+
+def download( url ):
+    req = urllib2.Request(url, None, {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5', 'Referer' : 'http://hichannel.hinet.net/radio/index.do'})
+    f = urllib2.urlopen(req).read()
+    if f:
+        return f
+    return ''
+
+def which(pgm):
+    path=os.getenv('PATH')
+    for p in path.split(os.path.pathsep):
+        p=os.path.join(p,pgm)
+        if os.path.exists(p) and os.access(p,os.X_OK):
+            return p
+
+page = download( url )
+
+reg = re.compile( '(http://.*?)\"', re.I|re.M )
+if(IS_PYTHON_2):
+	match = reg.search( page.decode() )
+else:
+	match = reg.search( page )
+url = match.group(1)
+
+
+if ('play' in sys.argv[0]):
+	ffplay = which('ffplay')
+	avplay = which('avplay')
+
+	if (ffplay is not None):
+		os.execl(ffplay,'ffplay','-nodisp',url)
+	elif (avplay is not None):
+		os.execl(avplay,'avplay','-nodisp',url)
+	else:
+		print("No ffplay or avplay found")
+
+elif ('record' in sys.argv[0]):
+	ffmpeg = which('ffmpeg')
+	avconv = which('avconv')
+	filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + sys.argv[1] + ".aac"
+	if (ffmpeg is not None):
+		os.execl(ffmpeg,'ffmpeg','-i',url,'-vcodec','copy','-acodec','copy',filename)
+	elif (avconv is not None):
+		os.execl(avconv,'avconv','-i',url,'-vcodec','copy','-acodec','copy',filename)
+	else:
+		print("No ffmpeg or avconv found")
+
