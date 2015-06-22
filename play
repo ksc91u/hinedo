@@ -70,7 +70,7 @@ if ('play' in sys.argv[0]):
 elif ('record' in sys.argv[0]):
 	ffmpeg = which('ffmpeg')
 	avconv = which('avconv')
-	filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + sys.argv[1] + ".aac"
+	filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") +'_'+sys.argv[1] + ".aac"
 	if (ffmpeg is not None):
 		os.execl(ffmpeg,'ffmpeg','-i',url,'-vcodec','copy','-acodec','copy',filename)
 	elif (avconv is not None):
